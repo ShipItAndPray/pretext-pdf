@@ -1,5 +1,9 @@
 # @shipitandpray/pretext-pdf
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://shipitandpray.github.io/pretext-pdf/) [![GitHub](https://img.shields.io/github/stars/ShipItAndPray/pretext-pdf?style=social)](https://github.com/ShipItAndPray/pretext-pdf)
+
+> **[View Live Demo](https://shipitandpray.github.io/pretext-pdf/)**
+
 Generate multi-page PDFs with proper text wrapping, pagination, and layout using [Pretext](https://github.com/chenglou/pretext) for measurement + [pdf-lib](https://github.com/Hopding/pdf-lib) for rendering.
 
 ## The Problem
