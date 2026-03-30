@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pretext-pdf Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #f0f6fc;
+    }
+    .subtitle {
+      color: #8b949e;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      height: calc(100vh - 140px);
+    }
+    .panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #8b949e;
+    }
+    textarea {
+      flex: 1;
+      background: #0d1117;
+      color: #c9d1d9;
+      border: none;
+      padding: 16px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+    }
+    .preview-container {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 16px;
+      background: #21262d;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .controls {
+      padding: 8px 16px;
+      border-top: 1px solid #30363d;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    select, button {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    button:hover { background: #30363d; }
+    button.primary {
+      background: #238636;
+      border-color: #2ea043;
+      color: #fff;
+    }
+    button.primary:hover { background: #2ea043; }
+    .status {
+      font-size: 12px;
+      color: #8b949e;
+      margin-left: auto;
+    }
+    label { font-size: 12px; color: #8b949e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>@shipitandpray/pretext-pdf</h1>
+    <p class="subtitle">Type text below, get a real PDF with proper text wrapping powered by Pretext + pdf-lib</p>
+
+    <div class="editor-layout">
+      <div class="panel">
+        <div class="panel-header">
+          <span>Input</span>
+        </div>
+        <textarea id="input" spellcheck="false">Pretext PDF Demo
+
+This library combines Pretext (accurate text measurement and line breaking) with pdf-lib (PDF generation) to produce multi-page PDFs with proper word wrapping, pagination, tables, and images.
+
+Unlike raw pdf-lib which only draws single lines, pretext-pdf automatically wraps text to fit the page width, breaks across pages when content overflows, and supports multi-column layouts.
+
+Features:
+- Automatic text wrapping using Pretext's line-breaking algorithm
+- Multi-page pagination with configurable margins
+- Multi-column text layout
+- Tables with auto-sized columns and header repetition
+- Image placement with alignment options
+- Standard PDF fonts (Helvetica, Courier, Times)
+- Fluent API for easy document construction
+
+Try editing this text to see the PDF update in real time. Add more paragraphs to see pagination in action. The preview on the right shows the actual PDF that would be generated.</textarea>
+        <div class="controls">
+          <label>Page Size:</label>
+          <select id="pageSize">
+            <option value="Letter" selected>Letter</option>
+            <option value="A4">A4</option>
+            <option value="A5">A5</option>
+            <option value="Legal">Legal</option>
+          </select>
+          <label>Font Size:</label>
+          <select id="fontSize">
+            <option value="10">10pt</option>
+            <option value="12" selected>12pt</option>
+            <option value="14">14pt</option>
+            <option value="16">16pt</option>
+          </select>
+          <button class="primary" id="download">Download PDF</button>
+          <span class="status" id="status">Ready</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>PDF Preview</span>
+          <span id="pageInfo"></span>
+        </div>
+        <div class="preview-container" id="previewContainer">
+          <canvas id="preview"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- pdf.js for rendering preview -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+
+  <script type="module">
+    // Import pdf.js
+    const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs')
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs'
+
+    // Import our dependencies
+    const { PDFDocument, StandardFonts, rgb } = await import('https://cdn.skypack.dev/pdf-lib')
+    const pretext = await import('https://cdn.skypack.dev/@chenglou/pretext')
+
+    const PDF_SCALE = 72 / 96
+
+    function pointsToPx(pt) { return pt / PDF_SCALE }
+    function pxToPoints(px) { return px * PDF_SCALE }
+
+    const PAGE_SIZES = {
+      Letter: { width: 612, height: 792 },
+      A4: { width: 595.28, height: 841.89 },
+      A5: { width: 419.53, height: 595.28 },
+      Legal: { width: 612, height: 1008 },
+    }
+
+    async function generatePdf(text, pageSize, fontSize) {
+      const doc = await PDFDocument.create()
+      const font = await doc.embedFont(StandardFonts.Helvetica)
+      const boldFont = await doc.embedFont(StandardFonts.HelveticaBold)
+
+      const size = PAGE_SIZES[pageSize]
+      const margins = { top: 72, right: 72, bottom: 72, left: 72 }
+      const lineHeight = fontSize * 1.4
+      const availableWidth = size.width - margins.left - margins.right
+
+      let page = doc.addPage([size.width, size.height])
+      let y = size.height - margins.top
+
+      // Split into paragraphs
+      const paragraphs = text.split(/\n\n+/)
+
+      for (let p = 0; p < paragraphs.length; p++) {
+        const para = paragraphs[p].trim()
+        if (!para) continue
+
+        // Check if it looks like a title (first paragraph or short text)
+        const isTitle = p === 0 && para.length < 60
+        const currentFont = isTitle ? boldFont : font
+        const currentSize = isTitle ? fontSize * 1.5 : fontSize
+        const currentLineHeight = currentSize * 1.4
+
+        // Measure with Pretext
+        const cssFontSize = pointsToPx(currentSize)
+        const cssFont = `${cssFontSize}px Helvetica`
+        const maxWidthPx = pointsToPx(availableWidth)
+
+        try {
+          const prepared = pretext.prepareWithSegments(para, cssFont)
+          const result = pretext.layoutWithLines(prepared, maxWidthPx, cssFontSize * 1.4)
+
+          for (const line of result.lines) {
+            if (y - currentLineHeight < margins.bottom) {
+              page = doc.addPage([size.width, size.height])
+              y = size.height - margins.top
+            }
+
+            page.drawText(line.text, {
+              x: margins.left,
+              y,
+              size: currentSize,
+              font: currentFont,
+              color: rgb(0, 0, 0),
+            })
+            y -= currentLineHeight
+          }
+        } catch (e) {
+          // Fallback: draw without wrapping
+          if (y - currentLineHeight < margins.bottom) {
+            page = doc.addPage([size.width, size.height])
+            y = size.height - margins.top
+          }
+          page.drawText(para, {
+            x: margins.left,
+            y,
+            size: currentSize,
+            font: currentFont,
+            color: rgb(0, 0, 0),
+            maxWidth: availableWidth,
+          })
+          y -= currentLineHeight
+        }
+
+        // Paragraph spacing
+        y -= currentLineHeight * 0.5
+      }
+
+      return doc.save()
+    }
+
+    async function renderPreview(pdfBytes) {
+      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes })
+      const pdf = await loadingTask.promise
+
+      document.getElementById('pageInfo').textContent = `${pdf.numPages} page${pdf.numPages > 1 ? 's' : ''}`
+
+      // Render first page
+      const page = await pdf.getPage(1)
+      const scale = 1.5
+      const viewport = page.getViewport({ scale })
+
+      const canvas = document.getElementById('preview')
+      const ctx = canvas.getContext('2d')
+      canvas.width = viewport.width
+      canvas.height = viewport.height
+
+      await page.render({ canvasContext: ctx, viewport }).promise
+    }
+
+    let debounceTimer = null
+
+    async function update() {
+      const status = document.getElementById('status')
+      status.textContent = 'Generating...'
+
+      try {
+        const text = document.getElementById('input').value
+        const pageSize = document.getElementById('pageSize').value
+        const fontSize = parseInt(document.getElementById('fontSize').value)
+
+        const pdfBytes = await generatePdf(text, pageSize, fontSize)
+        await renderPreview(pdfBytes)
+
+        // Store for download
+        window._lastPdfBytes = pdfBytes
+        status.textContent = 'Ready'
+      } catch (e) {
+        status.textContent = `Error: ${e.message}`
+        console.error(e)
+      }
+    }
+
+    // Debounced update on input
+    document.getElementById('input').addEventListener('input', () => {
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(update, 300)
+    })
+
+    document.getElementById('pageSize').addEventListener('change', update)
+    document.getElementById('fontSize').addEventListener('change', update)
+
+    // Download button
+    document.getElementById('download').addEventListener('click', () => {
+      if (!window._lastPdfBytes) return
+      const blob = new Blob([window._lastPdfBytes], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'pretext-pdf-output.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    })
+
+    // Initial render
+    update()
+  </script>
+</body>
+</html>

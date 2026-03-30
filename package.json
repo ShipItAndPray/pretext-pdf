@@ -1,0 +1,51 @@
+{
+  "name": "@shipitandpray/pretext-pdf",
+  "version": "0.1.0",
+  "description": "Generate multi-page PDFs with proper text wrapping, pagination, and layout using Pretext for measurement + pdf-lib for rendering",
+  "author": "ShipItAndPray",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@chenglou/pretext": ">=0.0.3",
+    "pdf-lib": ">=1.17.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "keywords": [
+    "pdf",
+    "text-wrapping",
+    "pretext",
+    "pdf-lib",
+    "pagination",
+    "layout",
+    "table",
+    "multi-page"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ShipItAndPray/pretext-pdf"
+  }
+}
