@@ -176,8 +176,8 @@ Try editing this text to see the PDF update in real time. Add more paragraphs to
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs'
 
     // Import our dependencies
-    const { PDFDocument, StandardFonts, rgb } = await import('https://cdn.skypack.dev/pdf-lib')
-    const pretext = await import('https://cdn.skypack.dev/@chenglou/pretext')
+    const { PDFDocument, StandardFonts, rgb } = await import('https://esm.sh/pdf-lib@1.17.1')
+    const pretext = await import('https://esm.sh/@chenglou/pretext@0.0.3')
 
     const PDF_SCALE = 72 / 96
 
